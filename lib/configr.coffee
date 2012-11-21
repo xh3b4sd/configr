@@ -11,7 +11,7 @@ optimist     = require("optimist")
 class exports.Configr
   @create: (env) ->
     env = env or optimist.argv.env or "development"
-    options = require("../../config/#{env}.coffee")
+    options = require("../../../config/#{env}.coffee")
     options.defaults.env = env
 
     require.cache["#{__dirname}/#{env}.coffee"] = undefined
@@ -22,7 +22,7 @@ class exports.Configr
     @dynamic(options)
 
   @dynamic: (options) ->
-    _.each require("./dynamic"), (option, name) =>
+    _.each require("../../../config/dynamic.coffee"), (option, name) =>
       _.each option, (dynMethod, dynName) =>
         options[name][dynName] = dynMethod(options) or options[name][dynName]
 
