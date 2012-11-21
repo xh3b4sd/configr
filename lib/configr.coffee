@@ -11,7 +11,7 @@ optimist     = require("optimist")
 class exports.Configr
   @create: (env) ->
     env = env or optimist.argv.env or "development"
-    options = require("./#{env}.coffee")
+    options = require("../../config/#{env}.coffee")
     options.defaults.env = env
 
     require.cache["#{__dirname}/#{env}.coffee"] = undefined
