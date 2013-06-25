@@ -1,29 +1,46 @@
-_            = require("underscore")
-optimist     = require("optimist")
+_        = require "underscore"
+Path     = require "path"
+Optimist = require "optimist"
 
 ###
-# Order of parsed options:
-#   process
-#   default
-#   environment
-#   dynamic
+Create configuration in order of:
+  default options
+  env options
+  custom options
 ###
-class exports.Configr
-  @create: (env) ->
-    env = env or optimist.argv.env or "development"
-    options = require("../../../config/#{env}.coffee")
-    options.defaults.env = env
+exports.create = (env, customOptions = {}) ->
+  env = env || Optimist.argv.env || "dev"
 
-    require.cache["#{__dirname}/#{env}.coffee"] = undefined
+  defaultConfigPath = Path.join(__dirname, "../config", "default.coffee")
+  envConfigPath     = Path.join(__dirname, "../config", "#{env}.coffee")
 
-    _.each optimist.argv, (argument, name) =>
-      options.defaults[name] = argument
+  defaultOptions = require defaultConfigPath
+  envOptions     = require envConfigPath
+  options        = merge {}, defaultOptions, envOptions, customOptions, Optimist.argv
 
-    @dynamic(options)
+  require.cache[defaultConfigPath] = undefined
+  require.cache[envConfigPath] = undefined
 
-  @dynamic: (options) ->
-    _.each require("../../../config/dynamic.coffee"), (option, name) =>
-      _.each option, (dynMethod, dynName) =>
-        options[name][dynName] = dynMethod(options) or options[name][dynName]
+  options
 
-    options
+
+merge = (objects...) ->
+  dest = {}
+
+  for obj in objects
+    dest = mergeRecursive dest, obj
+
+  return dest
+
+
+mergeRecursive = (dest, obj) ->
+  for p of obj
+    if _.isObject obj[p]
+      if _.isUndefined dest[p]
+        dest[p] = obj[p]
+      else
+        dest[p] = mergeRecursive dest[p], obj[p]
+    else
+      dest[p] = obj[p]
+
+  return dest
